@@ -1,0 +1,14 @@
+RewriteEngine On
+
+# Handle Gamblers/scheduling route
+RewriteRule ^Gamblers/scheduling/?$ Gamblers/scheduling.php [L,NC]
+
+# Handle API routes
+RewriteRule ^api/(.*)$ api/$1.php [L,NC]
+
+# Handle direct file requests
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Default route
+RewriteRule ^(.*)$ index.php?url=$1 [L,QSA]
