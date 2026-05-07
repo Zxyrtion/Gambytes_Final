@@ -111,6 +111,13 @@ class CalendlyService {
     }
     
     /**
+     * Make HTTP request to Calendly API (public wrapper)
+     */
+    public function makeRequestPublic($method, $endpoint, $data = null) {
+        return $this->makeRequest($method, $endpoint, $data);
+    }
+
+    /**
      * Make HTTP request to Calendly API
      */
     private function makeRequest($method, $endpoint, $data = null) {

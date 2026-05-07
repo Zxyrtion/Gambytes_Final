@@ -22,8 +22,8 @@ class ScheduleModel {
     public function createBooking($bookingData) {
         try {
             // Prepare the insert statement
-            $query = "INSERT INTO bookings (calendly_event_uri, email, name, start_time, end_time, status) 
-                      VALUES (?, ?, ?, ?, ?, ?)";
+            $query = "INSERT INTO booking_record (email, name, start_time, end_time, status) 
+                      VALUES (?, ?, ?, ?, ?)";
             
             $stmt = $this->conn->prepare($query);
             
@@ -32,26 +32,14 @@ class ScheduleModel {
             }
             
             // Extract data with defaults
-            $calendly_event_uri = $bookingData['calendly_event_uri'] ?? '';
-            if (empty($calendly_event_uri)) {
-                $calendly_event_uri = 'pending_' . time() . '_' . bin2hex(random_bytes(4));
-            }
-            $email = $bookingData['email'] ?? '';
-            $name = $bookingData['name'] ?? '';
+            $email      = $bookingData['email'] ?? '';
+            $name       = $bookingData['name'] ?? '';
             $start_time = $bookingData['start_time'] ?? date('Y-m-d H:i:s');
-            $end_time = $bookingData['end_time'] ?? date('Y-m-d H:i:s', strtotime('+1 hour', strtotime($start_time)));
-            $status = $bookingData['status'] ?? 'booked';
+            $end_time   = $bookingData['end_time'] ?? date('Y-m-d H:i:s', strtotime('+1 hour', strtotime($start_time)));
+            $status     = $bookingData['status'] ?? 'booked';
             
             // Bind parameters
-            $stmt->bind_param(
-                'ssssss',
-                $calendly_event_uri,
-                $email,
-                $name,
-                $start_time,
-                $end_time,
-                $status
-            );
+            $stmt->bind_param('sssss', $email, $name, $start_time, $end_time, $status);
             
             // Execute the statement
             if (!$stmt->execute()) {
@@ -81,7 +69,7 @@ class ScheduleModel {
      * @return array - Booking data or null if not found
      */
     public function getBookingByEventUri($calendly_event_uri) {
-        $query = "SELECT * FROM bookings WHERE calendly_event_uri = ? LIMIT 1";
+        $query = "SELECT * FROM booking_record WHERE calendly_event_uri = ? LIMIT 1";
         $stmt = $this->conn->prepare($query);
         
         if (!$stmt) {
@@ -104,7 +92,9 @@ class ScheduleModel {
      * @return array - Booking data or null if not found
      */
     public function getBookingById($id) {
-        $query = "SELECT * FROM bookings WHERE id = ? LIMIT 1";
+        $query = "SELECT id, email, name, start_time, end_time, created_at, updated_at, notes,
+                         IF(status = '' OR status IS NULL, 'booked', status) AS status
+                  FROM booking_record WHERE id = ? LIMIT 1";
         $stmt = $this->conn->prepare($query);
         
         if (!$stmt) {
@@ -127,7 +117,7 @@ class ScheduleModel {
      * @return array - Array of bookings
      */
     public function getBookingsByEmail($email) {
-        $query = "SELECT * FROM bookings WHERE email = ? ORDER BY start_time DESC";
+        $query = "SELECT * FROM booking_record WHERE email = ? ORDER BY start_time DESC";
         $stmt = $this->conn->prepare($query);
         
         if (!$stmt) {
@@ -155,7 +145,7 @@ class ScheduleModel {
      */
     public function updateBookingStatus($id, $status) {
         try {
-            $query = "UPDATE bookings SET status = ? WHERE id = ?";
+            $query = "UPDATE booking_record SET status = ? WHERE id = ?";
             $stmt = $this->conn->prepare($query);
             
             if (!$stmt) {
@@ -196,7 +186,7 @@ class ScheduleModel {
      * Update the booking URI and times after Calendly response
      */
     public function updateBookingEventUri($id, $calendly_event_uri, $start_time = null, $end_time = null) {
-        $query = "UPDATE bookings SET calendly_event_uri = ?, start_time = ?, end_time = ? WHERE id = ?";
+        $query = "UPDATE booking_record SET calendly_event_uri = ?, start_time = ?, end_time = ? WHERE id = ?";
         $stmt = $this->conn->prepare($query);
         
         if (!$stmt) {
@@ -221,7 +211,7 @@ class ScheduleModel {
      * @return array - Array of bookings
      */
     public function getBookings($filters = []) {
-        $query = "SELECT * FROM bookings WHERE 1=1";
+        $query = "SELECT * FROM booking_record WHERE 1=1";
         
         if (!empty($filters['status'])) {
             $query .= " AND status = '" . $this->conn->real_escape_string($filters['status']) . "'";
@@ -263,11 +253,17 @@ class ScheduleModel {
      * @return array - Array of bookings
      */
     public function getAllBookings($filters = [], $limit = 50, $offset = 0) {
-        $query = "SELECT * FROM bookings WHERE 1=1";
+        $query = "SELECT id, email, name, start_time, end_time, created_at, updated_at, notes,
+                         IF(status = '' OR status IS NULL, 'booked', status) AS status
+                  FROM booking_record WHERE 1=1";
         
         // Apply status filter
         if (!empty($filters['status'])) {
-            $query .= " AND status = '" . $this->conn->real_escape_string($filters['status']) . "'";
+            if ($filters['status'] === 'booked') {
+                $query .= " AND (status = 'booked' OR status = '' OR status IS NULL)";
+            } else {
+                $query .= " AND status = '" . $this->conn->real_escape_string($filters['status']) . "'";
+            }
         }
         
         // Apply search filter (search in name and email)
@@ -308,10 +304,15 @@ class ScheduleModel {
      * @return int - Total count
      */
     public function getBookingsCount($filters = []) {
-        $query = "SELECT COUNT(*) as count FROM bookings WHERE 1=1";
+        $query = "SELECT COUNT(*) as count FROM booking_record WHERE 1=1";
         
         if (!empty($filters['status'])) {
-            $query .= " AND status = '" . $this->conn->real_escape_string($filters['status']) . "'";
+            // treat empty string in DB as 'booked'
+            if ($filters['status'] === 'booked') {
+                $query .= " AND (status = 'booked' OR status = '' OR status IS NULL)";
+            } else {
+                $query .= " AND status = '" . $this->conn->real_escape_string($filters['status']) . "'";
+            }
         }
         
         if (!empty($filters['search'])) {
@@ -345,7 +346,7 @@ class ScheduleModel {
      */
     public function addBookingNotes($id, $notes) {
         try {
-            $query = "UPDATE bookings SET notes = CONCAT(IFNULL(notes, ''), '\n', ?, ' - ', DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')) WHERE id = ?";
+            $query = "UPDATE booking_record SET notes = CONCAT(IFNULL(notes, ''), '\n', ?, ' - ', DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')) WHERE id = ?";
             $stmt = $this->conn->prepare($query);
             
             if (!$stmt) {
