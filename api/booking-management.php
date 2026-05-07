@@ -14,6 +14,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/../app/models/ScheduleModel.php';
 
+// ── Auto-create booking_record table if missing ───────────────────────────
+try {
+    $__rawDb = new Database();
+    $__rawConn = $__rawDb->connect();
+    $__rawConn->query("CREATE TABLE IF NOT EXISTS `booking_record` (
+        `id` INT(11) NOT NULL AUTO_INCREMENT,
+        `calendly_event_uri` VARCHAR(255) DEFAULT NULL,
+        `email` VARCHAR(255) DEFAULT NULL,
+        `name` VARCHAR(255) DEFAULT NULL,
+        `start_time` DATETIME DEFAULT NULL,
+        `end_time` DATETIME DEFAULT NULL,
+        `status` ENUM('booked','approved','interviewed','admission','completed','cancelled','no_show') NOT NULL DEFAULT 'booked',
+        `notes` LONGTEXT DEFAULT NULL,
+        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`),
+        KEY `idx_email` (`email`),
+        KEY `idx_status` (`status`),
+        KEY `idx_created_at` (`created_at`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    // Ensure 'admission' is a valid enum value for existing tables
+    $__rawConn->query("ALTER TABLE booking_record MODIFY COLUMN status ENUM('booked','approved','interviewed','admission','completed','cancelled','no_show') NOT NULL DEFAULT 'booked'");
+    $__rawConn->close();
+    unset($__rawDb, $__rawConn);
+} catch (Throwable $e) { /* non-fatal */ }
+
 try {
     $scheduleModel = new ScheduleModel();
     $method = $_SERVER['REQUEST_METHOD'];
@@ -81,26 +107,25 @@ try {
                     break;
                     
                 case 'stats':
-                    // Get booking statistics for dashboard
+                    // Get booking statistics - uses booking_record table
                     $db = $scheduleModel->getConnection();
                     
-                    $totalQuery = "SELECT COUNT(*) as total FROM bookings";
-                    $bookedQuery = "SELECT COUNT(*) as count FROM bookings WHERE status='booked'";
-                    $cancelledQuery = "SELECT COUNT(*) as count FROM bookings WHERE status='cancelled'";
-                    $completedQuery = "SELECT COUNT(*) as count FROM bookings WHERE status='completed'";
-                    
-                    $totalResult = $db->query($totalQuery)->fetch_assoc();
-                    $bookedResult = $db->query($bookedQuery)->fetch_assoc();
-                    $cancelledResult = $db->query($cancelledQuery)->fetch_assoc();
-                    $completedResult = $db->query($completedQuery)->fetch_assoc();
-                    
+                    $totalResult     = $db->query("SELECT COUNT(*) as total FROM booking_record")->fetch_assoc();
+                    $bookedResult    = $db->query("SELECT COUNT(*) as count FROM booking_record WHERE status='booked'")->fetch_assoc();
+                    $approvedResult  = $db->query("SELECT COUNT(*) as count FROM booking_record WHERE status='approved'")->fetch_assoc();
+                    $cancelledResult = $db->query("SELECT COUNT(*) as count FROM booking_record WHERE status='cancelled'")->fetch_assoc();
+                    $completedResult = $db->query("SELECT COUNT(*) as count FROM booking_record WHERE status='completed'")->fetch_assoc();
+                    $interviewedResult = $db->query("SELECT COUNT(*) as count FROM booking_record WHERE status='interviewed'")->fetch_assoc();
+
                     echo json_encode([
                         'success' => true,
                         'data' => [
-                            'total' => (int)$totalResult['total'],
-                            'booked' => (int)$bookedResult['count'],
-                            'cancelled' => (int)$cancelledResult['count'],
-                            'completed' => (int)$completedResult['count']
+                            'total'      => (int)$totalResult['total'],
+                            'booked'     => (int)$bookedResult['count'],
+                            'approved'   => (int)$approvedResult['count'],
+                            'interviewed'=> (int)$interviewedResult['count'],
+                            'cancelled'  => (int)$cancelledResult['count'],
+                            'completed'  => (int)$completedResult['count']
                         ]
                     ]);
                     break;
@@ -126,7 +151,7 @@ try {
                     }
                     
                     // Validate status
-                    $validStatuses = ['booked', 'cancelled', 'no_show', 'completed'];
+                    $validStatuses = ['booked', 'approved', 'cancelled', 'no_show', 'completed'];
                     if (!in_array($newStatus, $validStatuses)) {
                         throw new Exception('Invalid status value');
                     }

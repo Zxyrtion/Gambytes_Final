@@ -1,14 +1,13 @@
-RewriteEngine On
+Options -Indexes
 
-# Handle Gamblers/scheduling route
-RewriteRule ^Gamblers/scheduling/?$ Gamblers/scheduling.php [L,NC]
+# Protect .env file
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>
 
-# Handle API routes
-RewriteRule ^api/(.*)$ api/$1.php [L,NC]
-
-# Handle direct file requests
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-
-# Default route
-RewriteRule ^(.*)$ index.php?url=$1 [L,QSA]
+# Protect sql and log files
+<FilesMatch "\.(sql|log)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

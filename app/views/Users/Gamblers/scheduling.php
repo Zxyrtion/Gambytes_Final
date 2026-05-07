@@ -1,25 +1,42 @@
 <?php
-session_start();
+require_once __DIR__ . '/../../../../includes/session_config.php';
 if (!isset($_SESSION['user_id'])) {
-    header("Location: ../app/views/auth/login.php");
+    header("Location: " . url('app/views/auth/login.php'));
     exit();
 }
 
 // Include required files
-require_once __DIR__ . '/../includes/CalendlyService.php';
-require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../../../../includes/CalendlyService.php';
+require_once __DIR__ . '/../../../../includes/config.php';
+require_once __DIR__ . '/../../../../includes/url_helper.php';
 
 // Get user information from database
-require_once __DIR__ . '/../app/core/Database.php';
+require_once __DIR__ . '/../../../core/Database.php';
 $db = new Database();
 $conn = $db->connect();
 
 $user_id = $_SESSION['user_id'];
-$sql = "SELECT * FROM users WHERE id='$user_id'";
-$result = $conn->query($sql);
+
+// SECURE: Using prepared statement to prevent SQL injection
+$stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+if (!$stmt) {
+    die("Database error occurred");
+}
+
+$stmt->bind_param('i', $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    session_destroy();
+    header("Location: ../app/views/auth/login.php");
+    exit();
+}
+
 $user = $result->fetch_assoc();
 $role = $user['role'];
 $full_name = $user['first_name'] . ' ' . $user['last_name'];
+$stmt->close();
 
 // Initialize Calendly service
 $calendlyService = new CalendlyService();
@@ -51,7 +68,7 @@ try {
     <title>Book Rehabilitation Schedule - Gambytes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="/GAMBYTES_FINAL/public/style.css">
+    <link rel="stylesheet" href="<?= asset('style.css') ?>">
 </head>
 <body>
     <a href="../app/views/auth/dashboard.php" class="back-to-dashboard">
@@ -196,6 +213,10 @@ try {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Dynamic URLs for API calls
+        const API_BASE_URL = '<?= apiUrl('') ?>';
+        const BOOKING_API_URL = '<?= apiUrl('booking.php') ?>';
+        
         let selectedEventType = null;
         let selectedTimeSlot = null;
         let currentStep = 1;
@@ -245,7 +266,7 @@ try {
             document.getElementById('loadingSlots').style.display = 'block';
             document.getElementById('timeSlots').innerHTML = '';
 
-            fetch('/GAMBYTES_Final/api/booking.php', {
+            fetch(BOOKING_API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -339,7 +360,7 @@ try {
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             submitBtn.disabled = true;
 
-            fetch('/GAMBYTES_Final/api/booking.php', {
+            fetch(BOOKING_API_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
