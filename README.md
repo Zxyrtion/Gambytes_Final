@@ -1,108 +1,90 @@
-# 🎯 Gambytes – Gambling Recovery & Financial Management System
+# 🎯 Gambytes – Rehabilitation Management & Recovery Support System
 
 ## 📌 Project Title
-**Gambytes: Gambling Recovery & Financial Management System**
+**Gambytes: Rehabilitation Management & Recovery Support System**
 
 ---
 
 ## 📖 Overview
-Gambytes is a web-based application developed to help individuals struggling with online gambling manage their finances, monitor gambling-related behavior, and support their recovery journey.
+Gambytes is a web-based rehabilitation management and recovery support system designed to assist rehabilitation centers in managing individuals affected by online gambling addiction.
 
-The system provides tools for budgeting, emotional monitoring, therapy tracking, scheduling, and family support. It also allows rehabilitation staff and stakeholders to monitor user progress and assist in decision-making.
+The system helps rehabilitation staff organize patient records, monitor therapy progress, manage schedules, track medications, process payments, and evaluate recovery status. It also allows family members to stay informed and involved throughout the rehabilitation process.
 
-The project follows the **MVC (Model-View-Controller)** architecture to ensure clean code organization, scalability, and maintainability.
+Gambytes aims to improve the efficiency of rehabilitation operations while supporting the emotional, behavioral, and financial recovery of patients.
+
+The project follows the **MVC (Model-View-Controller)** architecture to ensure scalability, maintainability, and proper separation of system components.
 
 ---
 
 ## ❗ Problem Statement
-Online gambling addiction has become a growing issue that negatively affects individuals and families financially, emotionally, and socially. Many gamblers experience uncontrolled spending, debt accumulation, emotional distress, and damaged relationships.
+Many rehabilitation centers still rely on manual processes such as paper records, spreadsheets, and unorganized monitoring systems. Because of this, staff may experience difficulties in:
 
-Existing solutions mainly focus on counseling and awareness but lack integrated tools for:
-- Financial monitoring
-- Gambling expense tracking
-- Family involvement
-- Recovery progress management
-- Rehabilitation workflow support
+- Tracking patient rehabilitation progress
+- Managing therapy schedules
+- Monitoring medication and evaluations
+- Handling contracts and agreements
+- Managing payments and receipts
+- Coordinating with family members
+- Organizing patient records efficiently
 
-Because of this, individuals struggling with gambling addiction often fail to monitor their behavior and financial condition effectively.
+These challenges can lead to delayed services, poor monitoring, data inconsistency, and inefficient rehabilitation management.
 
 ---
 
 ## 🎯 Objectives
 The system aims to:
 
-- Help users monitor gambling-related expenses
-- Encourage financial discipline through budgeting tools
-- Support emotional awareness using mood logs
-- Provide self-exclusion scheduling features
-- Allow family members to monitor recovery progress
-- Assist rehabilitation centers in managing therapy and evaluation processes
-- Reduce financial harm caused by online gambling
+- Digitize rehabilitation center operations
+- Improve patient monitoring and record management
+- Manage therapy schedules and rehabilitation phases
+- Track medication and treatment progress
+- Organize contracts, agreements, and evaluations
+- Simplify payment and receipt management
+- Allow family members to monitor rehabilitation updates
+- Improve communication between staff and patients
+- Support efficient rehabilitation workflows
 
 ---
 
 ## 👥 Target Users / Personas
 
-### 🎮 Desperate Online Gambling Addict
-Individuals struggling with gambling addiction who need financial monitoring, emotional support, and recovery assistance.
+### 🎮 Patient / Gambler
+Individuals undergoing rehabilitation and recovery from online gambling addiction.
 
-### 👨‍👩‍👧 Concerned Family Supporter
-Family members who want to monitor and support their loved one's recovery journey.
+### 👨‍👩‍👧 Family Member
+Relatives who monitor and support the patient throughout the rehabilitation process.
 
-### 💔 Emotionally Vulnerable Family Member
-Relatives emotionally affected by gambling-related financial problems and relationship conflicts.
+### 👩‍⚕️ Nurse
+Medical staff responsible for monitoring medications and patient conditions.
 
-### 💼 Lender Risk Manager Owner
-Lenders or financial stakeholders who need transparency regarding financial interactions and repayment monitoring.
+### 📋 Case Manager
+Personnel assigned to monitor therapy progress, evaluations, and rehabilitation records.
 
-### 📈 Strategic Lender Growth Seeker Owner
-Financial partners interested in minimizing lending risks while supporting responsible financial behavior.
+### 🛡️ Supervisor
+Staff responsible for approving records, monitoring operations, and managing rehabilitation workflows.
+
+### 👨‍💼 Admin Staff
+System administrators responsible for managing users, schedules, records, and system maintenance.
 
 ---
 
 ## 🔑 Key Features
-- User Authentication (Login/Register)
-- Scheduling System
-- Mood Logs
-- Budget & Spending Tracker
-- Contract & Agreement Management
-- Payment & Receipt Management
+- User Authentication System
+- Patient Management
+- Scheduling & Appointment System
 - Therapy Progress Monitoring
 - Medication Tracking
-- Evaluation & Discharge System
-- Self-Exclusion Scheduling
-- Family Monitoring Dashboard
+- Evaluation & Discharge Management
+- Contract & Agreement Management
+- Payment & Receipt System
+- Family Monitoring Access
+- Rehabilitation Workflow Management
 
 ---
 
 ## 🏗️ System Architecture
-The system uses the **MVC Architecture**:
+The system follows the **MVC Architecture**:
 
 - **Model** → Handles database operations
-- **View** → User Interface
-- **Controller** → Handles business logic and requests
-
----
-
-## 📁 Project Structure
-
-```bash
-gambytes/
-│
-├── app/
-│   ├── controllers/
-│   ├── models/
-│   ├── views/
-│
-├── core/
-├── public/
-├── includes/
-├── actions/
-├── api/
-│
-├── register.php
-├── login.php
-├── dashboard.php
-├── logout.php
-│
-└── README.md
+- **View** → Displays the user interface
+- **Controller** → Processes system logic and requests
